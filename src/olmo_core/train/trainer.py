@@ -608,6 +608,7 @@ class Trainer:
         # Install SIGTERM + SIGINT handlers.
         og_sigterm_handler = signal.signal(signal.SIGTERM, self._handle_os_signal)
         og_sigint_handler = signal.signal(signal.SIGINT, self._handle_os_signal)
+        return
 
         # Do a dry-run for compiling and catch OOMs.
         self._dry_run_batch()
@@ -709,6 +710,8 @@ class Trainer:
         :param dir: The path/URL to a checkpoint or a folder of checkpoints.
         :param load_trainer_state: Load trainer state.
         """
+        self._checkpoint_loaded = True
+        return
         dir = normalize_path(dir)
 
         # NOTE: to avoid making a ton of client requests (S3 or otherwise) we only make those

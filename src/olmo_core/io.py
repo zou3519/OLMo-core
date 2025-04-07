@@ -508,21 +508,25 @@ def retriable(
 ######################
 
 
-@retriable()
+@retriable(max_attempts=10)
 def _http_file_size(url: str) -> int:
     response = requests.head(url, allow_redirects=True)
     content_length = response.headers.get("content-length")
+    if response.status_code == 407:
+        raise requests.exceptions.ConnectionError()
     assert content_length
     return int(content_length)
 
 
-@retriable()
+@retriable(max_attempts=10)
 def _http_get_bytes_range(url: str, bytes_start: int, num_bytes: int) -> bytes:
     response = requests.get(
         url, headers={"Range": f"bytes={bytes_start}-{bytes_start+num_bytes-1}"}
     )
     if response.status_code == 404:
         raise FileNotFoundError(url)
+    if response.status_code == 407:
+        raise requests.exceptions.ConnectionError()
 
     response.raise_for_status()
 

@@ -12,6 +12,8 @@ from typing import (
     TypeVar,
     cast,
 )
+import torch
+torch.manual_seed(0)
 
 import torch
 from omegaconf import OmegaConf as om

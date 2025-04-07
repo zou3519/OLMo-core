@@ -508,8 +508,46 @@ class TransformerTrainModule(TrainModule):
         """
         Run a forward pass on a micro-batch, returning the logits.
         """
+        from torch._inductor.compiler_bisector import CompilerBisector
         with self._model_forward_context():
-            return self.model(input_ids, labels=labels, **kwargs)
+            out1 = self.model(input_ids, labels=labels, **kwargs)
+            # out2 = self.model(input_ids, labels=labels, **kwargs)
+            # check1 = torch.allclose(out1.logits, out2.logits)
+
+            # torch.distributed.breakpoint()
+
+
+            # for i in range(4):
+            #     self.model._modules['blocks'][f'{i}'].compile(backend="inductor")
+            self.model._modules['blocks']['0'].compile(backend="inductor")
+            # self.model.compile(backend="inductor")
+            bisecting=False
+            if bisecting:
+                def test_fn():
+                    torch._dynamo.reset()
+                    out3 = self.model(input_ids, labels=labels, **kwargs)
+                    check2 = torch.allclose(out1.logits, out3.logits, atol=2)
+                    return check2
+
+                torch.distributed.breakpoint()
+                out = CompilerBisector.do_bisect(test_fn)
+                torch.distributed.breakpoint()
+            else:
+                out3 = self.model(input_ids, labels=labels, **kwargs)
+#            self.model._modules['blocks']['1'].compile(backend="inductor")
+#            out4 = self.model(input_ids, labels=labels, **kwargs)
+#            check3 = torch.allclose(out1.logits, out4.logits)
+            # torch.distributed.breakpoint()
+
+#(Pdb) self.model._modules['blocks']['0'].compile()
+#(Pdb) self.model._modules['blocks']['1'].compile()
+#(Pdb) self.model._modules['blocks']['2'].compile()
+#(Pdb) self.model._modules['blocks']['3'].compile()
+#(Pdb) self.model(input_ids, labels=labels, **kwargs)asdf
+#*** SyntaxError: invalid syntax. Perhaps you forgot a comma?
+#(Pdb) out3 = self.model(input_ids, labels=labels, **kwargs)
+#print(torch.allclose(out1.logits, out2.logits))
+            return out3
 
     def num_flops_per_token(self, seq_len: int) -> int:
         return self.model.num_flops_per_token(seq_len)

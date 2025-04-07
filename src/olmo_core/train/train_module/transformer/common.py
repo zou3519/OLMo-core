@@ -102,9 +102,14 @@ def parallelize_model(
         log.info(f"Applied '{ac_config.mode}' activation checkpointing to the model")
 
     # Maybe compile.
+    # dict_keys(['embeddings', 'blocks', 'lm_head'])
+    # model_parts[0]._modules['blocks']['0']  olmo_core.nn.transformer.block.ReorderedNormTransformerBlock
+#    model_parts[0]._modules['embeddings'] = torch.compile(model_parts[0]._modules['embeddings'])
+#    model_parts[0]._modules['blocks'] = torch.compile(model_parts[0]._modules['blocks'])
+#    model_parts[0]._modules['lm_head'] = torch.compile(model_parts[0]._modules['lm_head'])
     if compile_model:
         if torch.cuda.is_available():
-            for m in model_parts:
+            for i, m in enumerate(model_parts):
                 m.apply_compile()
             log.info("Applied torch.compile() to the model")
         else:

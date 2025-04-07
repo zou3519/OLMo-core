@@ -114,6 +114,8 @@ class Transformer(nn.Module):
                 cache=cache,
             )
             self._validate_block(block_)
+            if block_idx < 0:
+                block_.compile(fullgraph=False)
             self.blocks[str(block_idx)] = block_
         self.lm_head = lm_head.build(
             d_model=d_model, vocab_size=vocab_size, init_device=init_device
@@ -858,7 +860,7 @@ class NormalizedTransformer(Transformer):
 
     def apply_compile(self):
         super().apply_compile()
-        self.normalize_matrices = torch.compile(self.normalize_matrices)
+#        self.normalize_matrices = torch.compile(self.normalize_matrices, backend="eager")
 
     def post_optim_step(self):
         super().post_optim_step()

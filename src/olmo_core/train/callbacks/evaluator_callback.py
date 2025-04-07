@@ -104,6 +104,8 @@ class EvaluatorCallback(Callback):
             eval_step = 0
             eval_tokens = 0
             for batch in evaluator:
+                if eval_step > 1:
+                    continue
                 eval_step += 1
                 eval_tokens += batch["input_ids"].numel() * dp_world_size
 
@@ -114,6 +116,8 @@ class EvaluatorCallback(Callback):
                     output = self.trainer.train_module.eval_batch(batch, labels=labels)
                     assert isinstance(output, LMOutputWithLoss)
                     logits, ce_loss, _ = output
+#                    ouput2 = self.trainer.train_module.eval_batch(batch, labels=labels)
+#                    torch.distributed.breakpoint()
 
                     # NOTE: might have host-device syncs here but that's okay.
                     with cuda_sync_debug_mode(0):
